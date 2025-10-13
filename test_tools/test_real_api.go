@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	mega "github.com/t3rm1n4l/go-mega"
+	mega "github.com/Clouddark75/go-mega"
 )
 
 func main() {

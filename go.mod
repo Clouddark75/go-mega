@@ -1,4 +1,4 @@
-module github.com/t3rm1n4l/go-mega
+module github.com/Clouddark75/go-mega
 
 go 1.24.0
 

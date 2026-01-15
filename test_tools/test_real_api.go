@@ -19,11 +19,11 @@ func main() {
 	m := mega.New()
 
 	// Enable debug logging to see the hashcash flow if it happens
-	m.SetDebugger(func(format string, v ...interface{}) {
+	m.SetDebugger(func(format string, v ...any) {
 		log.Printf("[DEBUG] "+format, v...)
 	})
 
-	m.SetLogger(func(format string, v ...interface{}) {
+	m.SetLogger(func(format string, v ...any) {
 		log.Printf("[INFO] "+format, v...)
 	})
 
@@ -94,6 +94,21 @@ func main() {
 				fmt.Printf("  ... and %d more items\n", len(children)-5)
 			}
 		}
+	}
+
+	// Test 5: Re-create client from session
+	fmt.Println("\n=== Test 5: Re-create client from session ===")
+	m2 := mega.New()
+	err = m2.LoginWithKeys(m.GetSessionID(), m.GetMasterKey())
+	if err != nil {
+		log.Fatalf("LoginWithKeys failed: %v", err)
+	}
+
+	user, err = m2.GetUser()
+	if err != nil {
+		log.Printf("GetUser failed: %v", err)
+	} else {
+		fmt.Printf("User info retrieved in %v: Email=%s\n", time.Since(start), user.Email)
 	}
 
 	fmt.Println("\n=== All tests completed ===")

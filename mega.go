@@ -124,8 +124,8 @@ type Mega struct {
 	// HTTP Client
 	client *http.Client
 	// Loggers
-	logf   func(format string, v ...interface{})
-	debugf func(format string, v ...interface{})
+	logf   func(format string, v ...any)
+	debugf func(format string, v ...any)
 	// serialize the API requests
 	apiMu sync.Mutex
 	// mutex to protext waitEvents
@@ -369,12 +369,29 @@ func (m *Mega) SetClient(client *http.Client) *Mega {
 }
 
 // discardLogf discards the log messages
-func discardLogf(format string, v ...interface{}) {
+func discardLogf(format string, v ...any) {
+}
+
+// Returns an opaque string representing the session
+func (m *Mega) GetSessionID() string {
+	return m.sid
+}
+
+func (m *Mega) GetMasterKey() []byte {
+	return m.k
+}
+
+// "Login" using the session ID (for API auth) and master key (for decryption). Alternative to logging in with username/password
+// This can be used to import back a session exported with GetSessionID and GetMasterKey without requiring the password again
+func (m *Mega) LoginWithKeys(sessionId string, masterKey []byte) error {
+	m.sid = sessionId
+	m.k = masterKey
+	return m.postAuthInit()
 }
 
 // SetLogger sets the logger for important messages.  By default this
 // is log.Printf.  Use nil to discard the messages.
-func (m *Mega) SetLogger(logf func(format string, v ...interface{})) *Mega {
+func (m *Mega) SetLogger(logf func(format string, v ...any)) *Mega {
 	if logf == nil {
 		logf = discardLogf
 	}
@@ -384,7 +401,7 @@ func (m *Mega) SetLogger(logf func(format string, v ...interface{})) *Mega {
 
 // SetDebugger sets the logger for debug messages.  By default these
 // messages are not output.
-func (m *Mega) SetDebugger(debugf func(format string, v ...interface{})) *Mega {
+func (m *Mega) SetDebugger(debugf func(format string, v ...any)) *Mega {
 	if debugf == nil {
 		debugf = discardLogf
 	}
@@ -665,9 +682,15 @@ func (m *Mega) MultiFactorLogin(email, passwd, multiFactor string) error {
 		return err
 	}
 
+	return m.postAuthInit()
+}
+
+// Finish initializing the Mega client after Login*()
+func (m *Mega) postAuthInit() error {
+
 	waitEvent := m.WaitEventsStart()
 
-	err = m.getFileSystem()
+	err := m.getFileSystem()
 	if err != nil {
 		return err
 	}
